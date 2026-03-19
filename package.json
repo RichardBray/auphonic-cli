@@ -1,6 +1,6 @@
 {
   "name": "auphonic-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CLI tool for processing audio through Auphonic",
   "type": "module",
   "bin": {
