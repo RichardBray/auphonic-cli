@@ -61,28 +61,30 @@ detect_platform() {
     log_info "Binary to download: $BINARY"
 }
 
-detect_shell() {
-    SHELL_NAME=$(basename "$SHELL")
-    log_info "Detected shell: $SHELL_NAME"
+detect_shells() {
+    SHELL_CONFIGS=()
 
-    case "$SHELL_NAME" in
-        bash)
-            if [[ "$OS" == "Darwin" ]]; then
-                SHELL_CONFIG="$HOME/.bash_profile"
-            else
-                SHELL_CONFIG="$HOME/.bashrc"
-            fi
-            ;;
-        zsh)
-            SHELL_CONFIG="$HOME/.zshrc"
-            ;;
-        fish)
-            SHELL_CONFIG="$HOME/.config/fish/config.fish"
-            ;;
-        *)
-            log_error "Unsupported shell: $SHELL_NAME (only bash, zsh, and fish are supported)" 1
-            ;;
-    esac
+    # Check for bash config
+    if [[ "$OS" == "Darwin" ]]; then
+        [[ -f "$HOME/.bash_profile" ]] && SHELL_CONFIGS+=("bash:$HOME/.bash_profile")
+    else
+        [[ -f "$HOME/.bashrc" ]] && SHELL_CONFIGS+=("bash:$HOME/.bashrc")
+    fi
+
+    # Check for zsh config
+    [[ -f "$HOME/.zshrc" ]] && SHELL_CONFIGS+=("zsh:$HOME/.zshrc")
+
+    # Check for fish config
+    [[ -f "$HOME/.config/fish/config.fish" ]] && SHELL_CONFIGS+=("fish:$HOME/.config/fish/config.fish")
+
+    if [[ ${#SHELL_CONFIGS[@]} -eq 0 ]]; then
+        log_warn "No shell config files found. You may need to add ~/.local/bin to your PATH manually."
+    else
+        for entry in "${SHELL_CONFIGS[@]}"; do
+            local shell_name="${entry%%:*}"
+            log_info "Found shell config: $shell_name"
+        done
+    fi
 }
 
 install_binary() {
@@ -194,28 +196,36 @@ update_path() {
         return 0
     fi
 
-    case "$SHELL_NAME" in
-        fish)
-            local fish_path_line="fish_add_path $install_dir"
-            if [[ ! -f "$SHELL_CONFIG" ]] || ! grep -q "fish_add_path.*$install_dir" "$SHELL_CONFIG"; then
-                mkdir -p "$(dirname "$SHELL_CONFIG")"
-                echo "$fish_path_line" >> "$SHELL_CONFIG"
-                log_info "Added $install_dir to PATH in $SHELL_CONFIG"
-            else
-                log_info "$install_dir already configured in $SHELL_CONFIG"
-            fi
-            ;;
-        *)
-            if [[ ! -f "$SHELL_CONFIG" ]] || ! grep -q "$path_line" "$SHELL_CONFIG"; then
-                echo "" >> "$SHELL_CONFIG"
-                echo "# Added by auphonic-cli installer" >> "$SHELL_CONFIG"
-                echo "$path_line" >> "$SHELL_CONFIG"
-                log_info "Added $install_dir to PATH in $SHELL_CONFIG"
-            else
-                log_info "$install_dir already configured in $SHELL_CONFIG"
-            fi
-            ;;
-    esac
+    if [[ ${#SHELL_CONFIGS[@]} -eq 0 ]]; then
+        return 0
+    fi
+
+    for entry in "${SHELL_CONFIGS[@]}"; do
+        local shell_name="${entry%%:*}"
+        local config_file="${entry#*:}"
+
+        case "$shell_name" in
+            fish)
+                local fish_path_line="fish_add_path $install_dir"
+                if ! grep -q "fish_add_path.*$install_dir" "$config_file"; then
+                    echo "$fish_path_line" >> "$config_file"
+                    log_info "Added $install_dir to PATH in $config_file"
+                else
+                    log_info "$install_dir already configured in $config_file"
+                fi
+                ;;
+            *)
+                if ! grep -q "$path_line" "$config_file"; then
+                    echo "" >> "$config_file"
+                    echo "# Added by auphonic-cli installer" >> "$config_file"
+                    echo "$path_line" >> "$config_file"
+                    log_info "Added $install_dir to PATH in $config_file"
+                else
+                    log_info "$install_dir already configured in $config_file"
+                fi
+                ;;
+        esac
+    done
 }
 
 print_summary() {
@@ -225,12 +235,10 @@ print_summary() {
     echo "========================================="
     echo ""
     echo "Binary location: $HOME/.local/bin/auphonic"
-    echo "Shell config: $SHELL_CONFIG"
     echo ""
     echo "Next steps:"
     echo ""
-    echo "1. Reload your shell or run:"
-    echo "   source $SHELL_CONFIG"
+    echo "1. Restart your shell or reload your config"
     echo ""
     echo "2. Set your API key:"
     echo "   export AUPHONIC_API_KEY=\"your-api-key\""
@@ -250,7 +258,7 @@ main() {
     echo ""
 
     detect_platform
-    detect_shell
+    detect_shells
     install_binary
     download_binary
     download_checksums
