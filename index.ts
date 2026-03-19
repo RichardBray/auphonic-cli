@@ -1,6 +1,25 @@
 #!/usr/bin/env bun
 
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { join } from "path";
+
 const BASE_URL = "https://auphonic.com/api";
+const CONFIG_DIR = join(process.env.HOME ?? "~", ".config", "auphonic-cli");
+const CONFIG_FILE = join(CONFIG_DIR, "config.json");
+
+function loadConfig(): { preset?: string } {
+  if (!existsSync(CONFIG_FILE)) return {};
+  try {
+    return JSON.parse(readFileSync(CONFIG_FILE, "utf-8"));
+  } catch {
+    return {};
+  }
+}
+
+function saveConfig(config: Record<string, unknown>) {
+  mkdirSync(CONFIG_DIR, { recursive: true });
+  writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2) + "\n");
+}
 
 function die(msg: string, detail?: string): never {
   console.error(`Error: ${msg}`);
@@ -21,9 +40,10 @@ Usage:
   auphonic <file> [options]
 
 Options:
-  -p, --preset <name>      Preset name (default: Usual-2)
+  -p, --preset <name>      Preset name (default: Usual-2 or saved default)
   -o, --output-dir <path>  Output directory (default: ~/Downloads/auphonic_results)
   -t, --timeout <seconds>  Max wait time (default: 300)
+  --set-preset <name>      Set the default preset and exit
   --list-presets           List available presets
   -v, --version            Show version
   -h, --help               Show this help
@@ -40,9 +60,10 @@ Examples:
 
 function parseArgs(argv: string[]) {
   const args = argv.slice(2);
+  const config = loadConfig();
   const opts = {
     file: "",
-    preset: "Usual-2",
+    preset: config.preset ?? "Usual-2",
     outputDir: `${process.env.HOME}/Downloads/auphonic_results`,
     timeout: 300,
     listPresets: false,
@@ -54,6 +75,13 @@ function parseArgs(argv: string[]) {
     else if (arg === "-v" || arg === "--version") {
       const pkg = require("./package.json");
       console.log(pkg.version);
+      process.exit(0);
+    } else if (arg === "--set-preset" && args[i + 1]) {
+      const name = args[++i];
+      const config = loadConfig();
+      config.preset = name;
+      saveConfig(config);
+      console.log(`Default preset set to: ${name}`);
       process.exit(0);
     } else if (arg === "--list-presets") opts.listPresets = true;
     else if ((arg === "-p" || arg === "--preset") && args[i + 1]) opts.preset = args[++i];

@@ -55,6 +55,16 @@ describe("auphonic cli", () => {
     expect(r.stdout.trim()).toMatch(/^\d+\.\d+\.\d+$/);
   });
 
+  test("--set-preset saves default and exits 0", async () => {
+    const tmpDir = `${import.meta.dir}/.test-config-${Date.now()}`;
+    const r = await result(["--set-preset", "TestPreset"], { HOME: tmpDir });
+    expect(r.exitCode).toBe(0);
+    expect(r.stdout).toContain("Default preset set to: TestPreset");
+    // Clean up
+    const { rmSync } = await import("fs");
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
   test("-h is an alias for --help", async () => {
     const r = await result(["-h"]);
     expect(r.exitCode).toBe(0);

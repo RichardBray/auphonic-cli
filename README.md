@@ -59,9 +59,10 @@ auphonic <file> [options]
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `-p, --preset <name>` | Auphonic preset name | `Usual-2` |
+| `-p, --preset <name>` | Auphonic preset name | `Usual-2` or saved default |
 | `-o, --output-dir <path>` | Directory to save processed files | `~/Downloads/auphonic_results` |
 | `-t, --timeout <seconds>` | Max time to wait for processing | `300` |
+| `--set-preset <name>` | Set the default preset and exit | |
 | `--list-presets` | List available presets and exit | |
 | `-v, --version` | Show version | |
 | `-h, --help` | Show help | |
