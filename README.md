@@ -20,6 +20,17 @@ VERSION=v0.1.0 curl -fsSL https://github.com/RichardBray/auphonic-cli/releases/l
 
 Download `auphonic-windows-x64.exe` from the [latest release](https://github.com/RichardBray/auphonic-cli/releases/latest) and add it to your PATH.
 
+### With Claude Code
+
+Paste this prompt into [Claude Code](https://claude.com/claude-code):
+
+```
+Download the latest auphonic-cli binary for my OS and architecture from
+https://github.com/RichardBray/auphonic-cli/releases/latest — save it to
+~/.local/bin/auphonic, make it executable, and add ~/.local/bin to my
+shell PATH if it isn't already.
+```
+
 ### From source
 
 ```bash
