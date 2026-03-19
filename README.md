@@ -2,19 +2,18 @@
 
 A fast, zero-dependency CLI for processing audio files through [Auphonic](https://auphonic.com). Upload, process, and download your audio — all from the terminal.
 
-## Prerequisites
-
-- [Bun](https://bun.sh) runtime
-- An [Auphonic](https://auphonic.com) account and API key
-
 ## Installation
 
-### From npm
+### Quick install (macOS & Linux)
 
 ```bash
-npm install -g auphonic-cli
-# or
-bunx auphonic-cli
+curl -fsSL https://raw.githubusercontent.com/RichardBray/auphonic-cli/main/scripts/install.sh | bash
+```
+
+### Install a specific version
+
+```bash
+VERSION=v0.1.0 curl -fsSL https://raw.githubusercontent.com/RichardBray/auphonic-cli/main/scripts/install.sh | bash
 ```
 
 ### From source
@@ -49,6 +48,7 @@ auphonic <file> [options]
 | `-o, --output-dir <path>` | Directory to save processed files | `~/Downloads/auphonic_results` |
 | `-t, --timeout <seconds>` | Max time to wait for processing | `300` |
 | `--list-presets` | List available presets and exit | |
+| `-v, --version` | Show version | |
 | `-h, --help` | Show help | |
 
 ### Examples

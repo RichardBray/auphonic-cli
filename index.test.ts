@@ -43,6 +43,18 @@ describe("auphonic cli", () => {
     expect(r.stderr).toContain("Unknown argument");
   });
 
+  test("--version prints version and exits 0", async () => {
+    const r = await result(["--version"]);
+    expect(r.exitCode).toBe(0);
+    expect(r.stdout.trim()).toMatch(/^\d+\.\d+\.\d+$/);
+  });
+
+  test("-v is an alias for --version", async () => {
+    const r = await result(["-v"]);
+    expect(r.exitCode).toBe(0);
+    expect(r.stdout.trim()).toMatch(/^\d+\.\d+\.\d+$/);
+  });
+
   test("-h is an alias for --help", async () => {
     const r = await result(["-h"]);
     expect(r.exitCode).toBe(0);

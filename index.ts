@@ -25,6 +25,7 @@ Options:
   -o, --output-dir <path>  Output directory (default: ~/Downloads/auphonic_results)
   -t, --timeout <seconds>  Max wait time (default: 300)
   --list-presets           List available presets
+  -v, --version            Show version
   -h, --help               Show this help
 
 Environment:
@@ -50,7 +51,11 @@ function parseArgs(argv: string[]) {
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === "-h" || arg === "--help") printUsage();
-    else if (arg === "--list-presets") opts.listPresets = true;
+    else if (arg === "-v" || arg === "--version") {
+      const pkg = require("./package.json");
+      console.log(pkg.version);
+      process.exit(0);
+    } else if (arg === "--list-presets") opts.listPresets = true;
     else if ((arg === "-p" || arg === "--preset") && args[i + 1]) opts.preset = args[++i];
     else if ((arg === "-o" || arg === "--output-dir") && args[i + 1]) opts.outputDir = args[++i];
     else if ((arg === "-t" || arg === "--timeout") && args[i + 1]) opts.timeout = parseInt(args[++i], 10);
