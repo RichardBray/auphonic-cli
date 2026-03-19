@@ -20,7 +20,7 @@ bunx auphonic-cli
 ### From source
 
 ```bash
-git clone https://github.com/your-username/auphonic-cli.git
+git clone https://github.com/RichardBray/auphonic-cli.git
 cd auphonic-cli
 bun install
 ```
