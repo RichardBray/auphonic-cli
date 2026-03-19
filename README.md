@@ -111,6 +111,32 @@ Then remove the PATH entry added by the installer from your shell config(s). Loo
 
 > Skip removing the PATH entry if other tools in `~/.local/bin` depend on it.
 
+## Using Claude Code
+
+If you use [Claude Code](https://claude.com/claude-code), you can install, update, or uninstall by pasting these prompts:
+
+**Install:**
+```
+Download the latest auphonic-cli binary for my OS and architecture from
+https://github.com/RichardBray/auphonic-cli/releases/latest — save it to
+~/.local/bin/auphonic, make it executable, and add ~/.local/bin to my
+shell PATH if it isn't already.
+```
+
+**Update:**
+```
+Update auphonic-cli to the latest version by downloading the correct binary
+for my OS and architecture from
+https://github.com/RichardBray/auphonic-cli/releases/latest and replacing
+~/.local/bin/auphonic with it.
+```
+
+**Uninstall:**
+```
+Remove ~/.local/bin/auphonic and remove any "Added by auphonic-cli installer"
+PATH entries from my shell config files.
+```
+
 ## How it works
 
 1. Looks up your preset by name via the Auphonic API
