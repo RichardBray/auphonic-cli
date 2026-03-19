@@ -89,6 +89,28 @@ If you cloned the repo instead of installing globally:
 bun run index.ts recording.wav -p "My Preset"
 ```
 
+## Uninstallation
+
+Remove the binary:
+
+```bash
+rm ~/.local/bin/auphonic
+```
+
+Then remove the PATH entry added by the installer from your shell config(s). Look for and delete these lines:
+
+- **bash/zsh** (`~/.bashrc`, `~/.bash_profile`, or `~/.zshrc`):
+  ```
+  # Added by auphonic-cli installer
+  export PATH="$HOME/.local/bin:$PATH"
+  ```
+- **fish** (`~/.config/fish/config.fish`):
+  ```
+  fish_add_path /Users/<your-username>/.local/bin
+  ```
+
+> Skip removing the PATH entry if other tools in `~/.local/bin` depend on it.
+
 ## How it works
 
 1. Looks up your preset by name via the Auphonic API
