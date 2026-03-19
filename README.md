@@ -7,14 +7,18 @@ A fast, zero-dependency CLI for processing audio files through [Auphonic](https:
 ### Quick install (macOS & Linux)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/RichardBray/auphonic-cli/main/scripts/install.sh | bash
+curl -fsSL https://github.com/RichardBray/auphonic-cli/releases/latest/download/install.sh | bash
 ```
 
 ### Install a specific version
 
 ```bash
-VERSION=v0.1.0 curl -fsSL https://raw.githubusercontent.com/RichardBray/auphonic-cli/main/scripts/install.sh | bash
+VERSION=v0.1.0 curl -fsSL https://github.com/RichardBray/auphonic-cli/releases/latest/download/install.sh | bash
 ```
+
+### Windows
+
+Download `auphonic-windows-x64.exe` from the [latest release](https://github.com/RichardBray/auphonic-cli/releases/latest) and add it to your PATH.
 
 ### From source
 
