@@ -1,0 +1,97 @@
+# auphonic-cli
+
+A fast, zero-dependency CLI for processing audio files through [Auphonic](https://auphonic.com). Upload, process, and download your audio — all from the terminal.
+
+## Prerequisites
+
+- [Bun](https://bun.sh) runtime
+- An [Auphonic](https://auphonic.com) account and API key
+
+## Installation
+
+### From npm
+
+```bash
+npm install -g auphonic-cli
+# or
+bunx auphonic-cli
+```
+
+### From source
+
+```bash
+git clone https://github.com/your-username/auphonic-cli.git
+cd auphonic-cli
+bun install
+```
+
+## Setup
+
+Get your API key from [Auphonic API settings](https://auphonic.com/engine/api/) and set it as an environment variable:
+
+```bash
+export AUPHONIC_API_KEY="your-api-key-here"
+```
+
+Add this to your shell profile (`~/.bashrc`, `~/.zshrc`, `~/.config/fish/config.fish`, etc.) to persist it.
+
+## Usage
+
+```bash
+auphonic <file> [options]
+```
+
+### Options
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `-p, --preset <name>` | Auphonic preset name | `Usual-2` |
+| `-o, --output-dir <path>` | Directory to save processed files | `~/Downloads/auphonic_results` |
+| `-t, --timeout <seconds>` | Max time to wait for processing | `300` |
+| `--list-presets` | List available presets and exit | |
+| `-h, --help` | Show help | |
+
+### Examples
+
+Process a file with the default preset:
+
+```bash
+auphonic recording.wav
+```
+
+Use a specific preset:
+
+```bash
+auphonic recording.wav -p "My Podcast Preset"
+```
+
+Save output to a custom directory:
+
+```bash
+auphonic recording.wav -o ./processed
+```
+
+List your available presets:
+
+```bash
+auphonic --list-presets
+```
+
+### Running from source
+
+If you cloned the repo instead of installing globally:
+
+```bash
+bun run index.ts recording.wav -p "My Preset"
+```
+
+## How it works
+
+1. Looks up your preset by name via the Auphonic API
+2. Uploads your audio file and creates a production
+3. Starts the production and polls for completion (every 15s)
+4. Downloads the processed output files to your output directory
+
+## License
+
+MIT

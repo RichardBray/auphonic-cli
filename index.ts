@@ -1,0 +1,226 @@
+#!/usr/bin/env bun
+
+const BASE_URL = "https://auphonic.com/api";
+
+function die(msg: string, detail?: string): never {
+  console.error(`Error: ${msg}`);
+  if (detail) console.error(detail);
+  process.exit(1);
+}
+
+function getApiKey(): string {
+  const key = process.env.AUPHONIC_API_KEY;
+  if (!key) die("AUPHONIC_API_KEY environment variable is not set.");
+  return key;
+}
+
+function printUsage(): never {
+  console.log(`auphonic - Process audio files through Auphonic
+
+Usage:
+  auphonic <file> [options]
+
+Options:
+  -p, --preset <name>      Preset name (default: Usual-2)
+  -o, --output-dir <path>  Output directory (default: ~/Downloads/auphonic_results)
+  -t, --timeout <seconds>  Max wait time (default: 300)
+  --list-presets           List available presets
+  -h, --help               Show this help
+
+Environment:
+  AUPHONIC_API_KEY         Your Auphonic API bearer token (required)
+
+Examples:
+  auphonic recording.wav
+  auphonic recording.wav -p "My Preset"
+  auphonic recording.wav -o ./output`);
+  process.exit(0);
+}
+
+function parseArgs(argv: string[]) {
+  const args = argv.slice(2);
+  const opts = {
+    file: "",
+    preset: "Usual-2",
+    outputDir: `${process.env.HOME}/Downloads/auphonic_results`,
+    timeout: 300,
+    listPresets: false,
+  };
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === "-h" || arg === "--help") printUsage();
+    else if (arg === "--list-presets") opts.listPresets = true;
+    else if ((arg === "-p" || arg === "--preset") && args[i + 1]) opts.preset = args[++i];
+    else if ((arg === "-o" || arg === "--output-dir") && args[i + 1]) opts.outputDir = args[++i];
+    else if ((arg === "-t" || arg === "--timeout") && args[i + 1]) opts.timeout = parseInt(args[++i], 10);
+    else if (!arg.startsWith("-") && !opts.file) opts.file = arg;
+    else die(`Unknown argument: ${arg}`);
+  }
+
+  return opts;
+}
+
+async function api(
+  path: string,
+  headers: Record<string, string>,
+  init?: RequestInit
+): Promise<any> {
+  const resp = await fetch(`${BASE_URL}${path}`, { ...init, headers: { ...headers, ...init?.headers } });
+  if (!resp.ok) {
+    const text = await resp.text();
+    die(`API request failed: ${path} (${resp.status})`, text);
+  }
+  return resp.json();
+}
+
+async function listPresets(headers: Record<string, string>) {
+  const data = await api("/presets.json?minimal_data=1", headers);
+  console.log("Available presets:");
+  for (const p of data.data ?? []) {
+    console.log(`  - ${p.preset_name}`);
+  }
+}
+
+async function findPreset(name: string, headers: Record<string, string>): Promise<string> {
+  const data = await api("/presets.json?minimal_data=1", headers);
+  for (const p of data.data ?? []) {
+    if (p.preset_name === name) return p.uuid;
+  }
+  console.error(`Preset "${name}" not found. Available presets:`);
+  for (const p of data.data ?? []) console.error(`  - ${p.preset_name}`);
+  process.exit(1);
+}
+
+async function upload(
+  filePath: string,
+  presetUuid: string,
+  headers: Record<string, string>
+): Promise<string> {
+  const file = Bun.file(filePath);
+  if (!(await file.exists())) die(`File not found: ${filePath}`);
+
+  const formData = new FormData();
+  formData.append("input_file", file);
+  formData.append("title", `Processed ${filePath.split("/").pop()}`);
+  formData.append("preset", presetUuid);
+
+  console.log(`Uploading: ${filePath}`);
+  const resp = await fetch(`${BASE_URL}/simple/productions.json`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  if (!resp.ok) {
+    const text = await resp.text();
+    die(`Upload failed (${resp.status})`, text);
+  }
+
+  const json = (await resp.json()) as any;
+  const uuid = json.data?.uuid;
+  if (!uuid) die("No production UUID returned from upload.");
+  return uuid;
+}
+
+async function startProduction(uuid: string, headers: Record<string, string>) {
+  await new Promise((r) => setTimeout(r, 2000));
+  console.log("Starting production...");
+
+  const resp = await fetch(`${BASE_URL}/production/${uuid}/start.json`, {
+    method: "POST",
+    headers,
+  });
+
+  if (!resp.ok) {
+    const status = await api(`/production/${uuid}/status.json`, headers);
+    const code = status.data?.status;
+    if (![1, 2, 3].includes(code)) {
+      die("Failed to start production.", await resp.text());
+    }
+    console.log("Production already in progress.");
+  } else {
+    console.log("Production started.");
+  }
+}
+
+async function pollStatus(uuid: string, headers: Record<string, string>, timeout: number) {
+  const start = Date.now();
+  await new Promise((r) => setTimeout(r, 5000));
+
+  while (true) {
+    const statusResp = await api(`/production/${uuid}/status.json`, headers);
+    const code = statusResp.data?.status;
+    const str = statusResp.data?.status_string;
+    console.log(`Status: ${str} (${code})`);
+
+    if (code === 3) {
+      console.log("Processing complete!");
+      return;
+    }
+
+    if (code === 2) {
+      const details = await api(`/production/${uuid}.json`, headers);
+      die(
+        "Processing failed.",
+        [details.data?.error_summary, details.data?.error_message, details.data?.warning_message]
+          .filter(Boolean)
+          .join("\n")
+      );
+    }
+
+    if (Date.now() - start > timeout * 1000) {
+      die(`Timed out after ${timeout}s.`, `Check manually: https://auphonic.com/engine/status/${uuid}`);
+    }
+
+    await new Promise((r) => setTimeout(r, 15000));
+  }
+}
+
+async function downloadResults(uuid: string, outputDir: string, headers: Record<string, string>) {
+  const { mkdirSync } = await import("fs");
+  mkdirSync(outputDir, { recursive: true });
+
+  const details = await api(`/production/${uuid}.json`, headers);
+  const files = details.data?.output_files ?? [];
+
+  for (const f of files) {
+    const url = f.download_url;
+    const filename = f.filename;
+    if (!url || !filename) continue;
+
+    console.log(`Downloading: ${filename}`);
+    const resp = await fetch(url, { headers, redirect: "follow" });
+    if (!resp.ok) die(`Download failed: ${filename} (${resp.status})`);
+
+    const outPath = `${outputDir}/${filename}`;
+    await Bun.write(outPath, resp);
+    console.log(`Saved: ${outPath}`);
+  }
+}
+
+// --- Main ---
+
+const opts = parseArgs(process.argv);
+const apiKey = getApiKey();
+const headers = { Authorization: `Bearer ${apiKey}` };
+
+if (opts.listPresets) {
+  await listPresets(headers);
+  process.exit(0);
+}
+
+if (!opts.file) printUsage();
+
+const presetUuid = await findPreset(opts.preset, headers);
+console.log(`Using preset: ${opts.preset} (${presetUuid})`);
+
+const productionUuid = await upload(opts.file, presetUuid, headers);
+console.log(`Production: ${productionUuid}`);
+console.log(`Monitor: https://auphonic.com/engine/status/${productionUuid}`);
+
+await startProduction(productionUuid, headers);
+await pollStatus(productionUuid, headers, opts.timeout);
+await downloadResults(productionUuid, opts.outputDir, headers);
+
+console.log("Done!");

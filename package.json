@@ -1,0 +1,15 @@
+{
+  "name": "auphonic-cli",
+  "version": "0.1.0",
+  "description": "CLI tool for processing audio through Auphonic",
+  "type": "module",
+  "bin": {
+    "auphonic": "./index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
