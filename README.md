@@ -26,9 +26,9 @@ Paste this prompt into [Claude Code](https://claude.com/claude-code):
 
 ```
 Download the latest auphonic-cli binary for my OS and architecture from
-https://github.com/RichardBray/auphonic-cli/releases/latest — save it to
-~/.local/bin/auphonic, make it executable, and add ~/.local/bin to my
-shell PATH if it isn't already.
+https://github.com/RichardBray/auphonic-cli/releases/latest — install it
+to the appropriate location for my platform, make it executable if needed,
+and add it to my PATH if it isn't already.
 ```
 
 ### From source
@@ -129,9 +129,9 @@ If you use [Claude Code](https://claude.com/claude-code), you can install, updat
 **Install:**
 ```
 Download the latest auphonic-cli binary for my OS and architecture from
-https://github.com/RichardBray/auphonic-cli/releases/latest — save it to
-~/.local/bin/auphonic, make it executable, and add ~/.local/bin to my
-shell PATH if it isn't already.
+https://github.com/RichardBray/auphonic-cli/releases/latest — install it
+to the appropriate location for my platform, make it executable if needed,
+and add it to my PATH if it isn't already.
 ```
 
 **Update:**
