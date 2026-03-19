@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] - 2026-03-19
+
+### Fixed
+
+- Install script now updates PATH in all detected shell configs (bash, zsh, fish) instead of only the login shell
+
+### Added
+
+- Windows x64 binary support
+- `--version` / `-v` flag
+
 ## [0.1.0] - 2026-03-19
 
 ### Added
