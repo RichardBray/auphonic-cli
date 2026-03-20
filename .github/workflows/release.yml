@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Build all platform binaries
+        run: bun run build:standalone
+
+      - name: Generate checksums
+        working-directory: dist
+        run: sha256sum auphonic-macos-apple-silicon auphonic-macos-intel auphonic-linux-x64 auphonic-windows-x64.exe > checksums.txt
+
+      - name: Create release with assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            dist/auphonic-macos-apple-silicon \
+            dist/auphonic-macos-intel \
+            dist/auphonic-linux-x64 \
+            dist/auphonic-windows-x64.exe \
+            dist/checksums.txt \
+            install.sh \
+            --title "${{ github.ref_name }}" \
+            --generate-notes
