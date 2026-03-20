@@ -227,7 +227,8 @@ async function downloadResults(uuid: string, outputDir: string, headers: Record<
     if (!resp.ok) die(`Download failed: ${filename} (${resp.status})`);
 
     const outPath = `${outputDir}/${filename}`;
-    await Bun.write(outPath, resp);
+    const arrayBuf = await resp.arrayBuffer();
+    await Bun.write(outPath, arrayBuf);
     console.log(`Saved: ${outPath}`);
   }
 }
