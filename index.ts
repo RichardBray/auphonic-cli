@@ -45,6 +45,8 @@ Options:
   -t, --timeout <seconds>  Max wait time (default: 300)
   --set-preset <name>      Set the default preset and exit
   --list-presets           List available presets
+  --post-process           Run ffmpeg de-click/de-clip/de-ess on downloaded audio
+  --deesser <0..1>         De-esser intensity (default: 0.2)
   -v, --version            Show version
   -h, --help               Show this help
 
@@ -67,6 +69,8 @@ function parseArgs(argv: string[]) {
     outputDir: `${process.env.HOME}/Downloads/auphonic_results`,
     timeout: 300,
     listPresets: false,
+    postProcess: false,
+    deesser: 0.2,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -87,6 +91,8 @@ function parseArgs(argv: string[]) {
     else if ((arg === "-p" || arg === "--preset") && args[i + 1]) opts.preset = args[++i];
     else if ((arg === "-o" || arg === "--output-dir") && args[i + 1]) opts.outputDir = args[++i];
     else if ((arg === "-t" || arg === "--timeout") && args[i + 1]) opts.timeout = parseInt(args[++i], 10);
+    else if (arg === "--post-process") opts.postProcess = true;
+    else if (arg === "--deesser" && args[i + 1]) opts.deesser = parseFloat(args[++i]);
     else if (!arg.startsWith("-") && !opts.file) opts.file = arg;
     else die(`Unknown argument: ${arg}`);
   }
@@ -233,6 +239,39 @@ async function downloadResults(uuid: string, outputDir: string, headers: Record<
   }
 }
 
+const AUDIO_EXTS = new Set(["wav", "mp3", "m4a", "aac", "flac", "ogg", "opus", "aiff", "aif"]);
+
+async function postProcess(outputDir: string, deesser: number) {
+  const { readdirSync } = await import("fs");
+  const files = readdirSync(outputDir).filter((f) => {
+    if (f.includes(".cleaned.")) return false;
+    const ext = f.split(".").pop()?.toLowerCase();
+    return ext ? AUDIO_EXTS.has(ext) : false;
+  });
+
+  if (files.length === 0) {
+    console.log("Post-process: no audio files to clean.");
+    return;
+  }
+
+  const filter = `adeclick,adeclip,deesser=i=${deesser}`;
+
+  for (const f of files) {
+    const inPath = `${outputDir}/${f}`;
+    const dot = f.lastIndexOf(".");
+    const outPath = `${outputDir}/${f.slice(0, dot)}.cleaned${f.slice(dot)}`;
+    console.log(`Post-processing: ${f} -> ${f.slice(0, dot)}.cleaned${f.slice(dot)}`);
+
+    const proc = Bun.spawn(
+      ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", inPath, "-af", filter, outPath],
+      { stdout: "inherit", stderr: "inherit" },
+    );
+    const code = await proc.exited;
+    if (code !== 0) die(`ffmpeg failed on ${f} (exit ${code}). Is ffmpeg installed?`);
+    console.log(`Saved: ${outPath}`);
+  }
+}
+
 // --- Main ---
 
 const opts = parseArgs(process.argv);
@@ -256,5 +295,9 @@ console.log(`Monitor: https://auphonic.com/engine/status/${productionUuid}`);
 await startProduction(productionUuid, headers);
 await pollStatus(productionUuid, headers, opts.timeout);
 await downloadResults(productionUuid, opts.outputDir, headers);
+
+if (opts.postProcess) {
+  await postProcess(opts.outputDir, opts.deesser);
+}
 
 console.log("Done!");

@@ -65,6 +65,12 @@ describe("auphonic cli", () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
+  test("--help mentions post-process options", async () => {
+    const r = await result(["--help"]);
+    expect(r.stdout).toContain("--post-process");
+    expect(r.stdout).toContain("--deesser");
+  });
+
   test("-h is an alias for --help", async () => {
     const r = await result(["-h"]);
     expect(r.exitCode).toBe(0);
