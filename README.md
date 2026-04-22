@@ -95,13 +95,21 @@ List your available presets:
 auphonic --list-presets
 ```
 
-Run de-click/de-clip/de-ess on the Auphonic output (requires `ffmpeg` on your PATH):
+Run post-processing on the Auphonic output (requires `ffmpeg` on your PATH):
 
 ```bash
 auphonic recording.wav --post-process
 ```
 
-This produces a `recording.cleaned.wav` alongside the Auphonic output. Tune de-esser intensity with `--deesser` (0 = off, 1 = aggressive, default `0.2`):
+`--post-process` runs three ffmpeg filters in sequence on every downloaded audio file:
+
+1. **`adeclick`** — removes mouth clicks, pops, and impulsive noise
+2. **`adeclip`** — repairs clipped/distorted peaks
+3. **`deesser`** — reduces sibilance ("s"/"sh" harshness)
+
+All three run together; they are not individually toggleable. The result is saved as `recording.cleaned.wav` alongside the original Auphonic output (non-destructive).
+
+Tune de-esser intensity with `--deesser` (0 = off, 1 = aggressive, default `0.2`):
 
 ```bash
 auphonic recording.wav --post-process --deesser 0.4
