@@ -64,6 +64,8 @@ auphonic <file> [options]
 | `-t, --timeout <seconds>` | Max time to wait for processing | `300` |
 | `--set-preset <name>` | Set the default preset and exit | |
 | `--list-presets` | List available presets and exit | |
+| `--post-process` | Run ffmpeg de-click/de-clip/de-ess on downloaded audio | off |
+| `--deesser <0..1>` | De-esser intensity when `--post-process` is set | `0.2` |
 | `-v, --version` | Show version | |
 | `-h, --help` | Show help | |
 
@@ -91,6 +93,18 @@ List your available presets:
 
 ```bash
 auphonic --list-presets
+```
+
+Run de-click/de-clip/de-ess on the Auphonic output (requires `ffmpeg` on your PATH):
+
+```bash
+auphonic recording.wav --post-process
+```
+
+This produces a `recording.cleaned.wav` alongside the Auphonic output. Tune de-esser intensity with `--deesser` (0 = off, 1 = aggressive, default `0.2`):
+
+```bash
+auphonic recording.wav --post-process --deesser 0.4
 ```
 
 ### Running from source
@@ -155,6 +169,7 @@ PATH entries from my shell config files.
 2. Uploads your audio file and creates a production
 3. Starts the production and polls for completion (every 15s)
 4. Downloads the processed output files to your output directory
+5. *(Optional, with `--post-process`)* Runs `ffmpeg` with the `adeclick,adeclip,deesser` filter chain on each downloaded audio file, saving the result as `<name>.cleaned.<ext>`
 
 ## License
 
